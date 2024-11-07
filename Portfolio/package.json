@@ -1,0 +1,18 @@
+{
+  "name": "portfolio",
+  "version": "1.0.0",
+  "description": "npm install",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "npm install"
+  },
+  "keywords": [
+    "npm",
+    "install"
+  ],
+  "author": "",
+  "license": "ISC"
+}
