@@ -1,4 +1,6 @@
 import LivingReimagined from '../models/LivingReimaginedModel.js';
+import fs from 'fs';
+import path from 'path';
 
 // ➤ Create Living Reimagined
 export const createLivingReimagined = async (req, res) => {
@@ -10,10 +12,27 @@ export const createLivingReimagined = async (req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
+        // Parse items if it's a string (from form data)
+        let parsedItems;
+        if (typeof items === 'string') {
+            try {
+                parsedItems = JSON.parse(items);
+            } catch (e) {
+                // If parsing fails, treat as comma-separated string
+                parsedItems = items.split(',').map(item => item.trim()).filter(item => item);
+            }
+        } else {
+            parsedItems = items;
+        }
+
+        if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+            return res.status(400).json({ message: 'Items must be a non-empty array' });
+        }
+
         const newLiving = new LivingReimagined({
             image,
             title,
-            items
+            items: parsedItems
         });
 
         const savedLiving = await newLiving.save();
@@ -50,18 +69,47 @@ export const updateLivingReimagined = async (req, res) => {
         const { title, items } = req.body;
         const image = req.file ? req.file.filename : null;
 
+        // Find the existing document
+        const existingLiving = await LivingReimagined.findById(req.params.id);
+        if (!existingLiving) {
+            return res.status(404).json({ message: 'Living Reimagined not found' });
+        }
+
+        // Parse items if it's a string (from form data)
+        let parsedItems;
+        if (items) {
+            if (typeof items === 'string') {
+                try {
+                    parsedItems = JSON.parse(items);
+                } catch (e) {
+                    parsedItems = items.split(',').map(item => item.trim()).filter(item => item);
+                }
+            } else {
+                parsedItems = items;
+            }
+        }
+
         const updatedData = {
-            title,
-            items
+            title: title || existingLiving.title,
+            items: parsedItems || existingLiving.items
         };
 
         if (image) {
+            // Delete old image if it exists
+            if (existingLiving.image) {
+                const oldImagePath = path.join('uploads', existingLiving.image);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
             updatedData.image = image;
         }
 
-        const updatedLiving = await LivingReimagined.findByIdAndUpdate(req.params.id, updatedData, { new: true });
-
-        if (!updatedLiving) return res.status(404).json({ message: 'Living Reimagined not found' });
+        const updatedLiving = await LivingReimagined.findByIdAndUpdate(
+            req.params.id, 
+            updatedData, 
+            { new: true }
+        );
 
         res.status(200).json(updatedLiving);
     } catch (error) {
@@ -73,7 +121,17 @@ export const updateLivingReimagined = async (req, res) => {
 export const deleteLivingReimagined = async (req, res) => {
     try {
         const deletedLiving = await LivingReimagined.findByIdAndDelete(req.params.id);
-        if (!deletedLiving) return res.status(404).json({ message: 'Living Reimagined not found' });
+        if (!deletedLiving) {
+            return res.status(404).json({ message: 'Living Reimagined not found' });
+        }
+
+        // Delete associated image file
+        if (deletedLiving.image) {
+            const imagePath = path.join('uploads', deletedLiving.image);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
 
         res.status(200).json({ message: 'Living Reimagined deleted successfully' });
     } catch (error) {

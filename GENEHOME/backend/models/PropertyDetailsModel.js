@@ -15,10 +15,15 @@ const propertyDetailsSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    feature: {
-        type: String,
+    features: {  // Changed from 'feature' to 'features' array
+        type: [String],
         required: true,
-        trim: true
+        validate: {
+            validator: function(v) {
+                return v && v.length > 0;
+            },
+            message: 'At least one feature is required'
+        }
     }
 }, {
     timestamps: true

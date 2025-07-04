@@ -11,9 +11,14 @@ const livingReimaginedSchema = new mongoose.Schema({
         trim: true
     },
     items: {
-        type: String,
+        type: [String], // Changed to array of strings
         required: true,
-        trim: true
+        validate: {
+            validator: function(v) {
+                return v && v.length > 0;
+            },
+            message: 'Items array must contain at least one item'
+        }
     }
 }, {
     timestamps: true

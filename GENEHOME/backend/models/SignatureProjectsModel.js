@@ -15,10 +15,15 @@ const signatureProjectSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    features: {
-        type: String,
+    features: {  // Changed from String to Array
+        type: [String],
         required: true,
-        trim: true
+        validate: {
+            validator: function(v) {
+                return v && v.length > 0;
+            },
+            message: 'At least one feature is required'
+        }
     }
 }, {
     timestamps: true

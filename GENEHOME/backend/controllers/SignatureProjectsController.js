@@ -10,11 +10,27 @@ export const createSignatureProject = async (req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
+        // Parse features if it's a string (from form data)
+        let parsedFeatures;
+        if (typeof features === 'string') {
+            try {
+                parsedFeatures = JSON.parse(features);
+            } catch (error) {
+                return res.status(400).json({ message: 'Invalid features format' });
+            }
+        } else {
+            parsedFeatures = features;
+        }
+
+        if (!Array.isArray(parsedFeatures) || parsedFeatures.length === 0) {
+            return res.status(400).json({ message: 'At least one feature is required' });
+        }
+
         const newProject = new SignatureProject({
             image,
             name,
             location,
-            features
+            features: parsedFeatures
         });
 
         const savedProject = await newProject.save();
@@ -53,15 +69,38 @@ export const updateSignatureProject = async (req, res) => {
 
         const updatedData = {
             name,
-            location,
-            features
+            location
         };
+
+        // Handle features
+        if (features) {
+            let parsedFeatures;
+            if (typeof features === 'string') {
+                try {
+                    parsedFeatures = JSON.parse(features);
+                } catch (error) {
+                    return res.status(400).json({ message: 'Invalid features format' });
+                }
+            } else {
+                parsedFeatures = features;
+            }
+
+            if (!Array.isArray(parsedFeatures) || parsedFeatures.length === 0) {
+                return res.status(400).json({ message: 'At least one feature is required' });
+            }
+
+            updatedData.features = parsedFeatures;
+        }
 
         if (image) {
             updatedData.image = image;
         }
 
-        const updatedProject = await SignatureProject.findByIdAndUpdate(req.params.id, updatedData, { new: true });
+        const updatedProject = await SignatureProject.findByIdAndUpdate(
+            req.params.id, 
+            updatedData, 
+            { new: true }
+        );
 
         if (!updatedProject) return res.status(404).json({ message: 'Project not found' });
 
