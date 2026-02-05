@@ -135,21 +135,6 @@ export const useReminders = () => {
     }
   };
 
-  // Snooze alarm
-  const snoozeAlarm = () => {
-    if (activeAlarm) {
-      const newTime = new Date(activeAlarm.datetime);
-      newTime.setMinutes(newTime.getMinutes() + 5);
-      
-      setReminders(reminders.map(r => 
-        r.id === activeAlarm.id 
-          ? { ...r, datetime: newTime.toISOString().slice(0, 16), status: 'scheduled' }
-          : r
-      ));
-      setActiveAlarm(null);
-    }
-  };
-
   // Mark alarm as done
   const markDone = () => {
     if (activeAlarm) {
@@ -204,7 +189,6 @@ export const useReminders = () => {
     saveEdit,
     cancelEdit,
     clearAllReminders,
-    snoozeAlarm,
     markDone
   };
 };

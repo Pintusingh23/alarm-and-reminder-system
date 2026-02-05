@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
 
-const AlarmModal = ({ alarm, onSnooze, onMarkDone }) => {
+const AlarmModal = ({ alarm, onMarkDone }) => {
   if (!alarm) return null;
 
   // Format datetime for display
@@ -43,12 +43,7 @@ const AlarmModal = ({ alarm, onSnooze, onMarkDone }) => {
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <button
-            onClick={onSnooze}
-            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
-          >
-            ⏰ Snooze 5 min
-          </button>
+
           <button
             onClick={onMarkDone}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
