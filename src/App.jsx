@@ -33,7 +33,6 @@ export default function App() {
     saveEdit,
     cancelEdit,
     clearAllReminders,
-    snoozeAlarm,
     markDone
   } = useReminders();
 
@@ -87,7 +86,6 @@ export default function App() {
       {/* Alarm Modal */}
       <AlarmModal 
         alarm={activeAlarm}
-        onSnooze={snoozeAlarm}
         onMarkDone={markDone}
       />
     </div>
