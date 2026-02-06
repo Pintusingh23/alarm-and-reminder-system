@@ -18,7 +18,7 @@ export default function App() {
     formData,
     editData,
     
-    // Setters
+    // Setters 
     setSearchQuery,
     setSortBy,
     setFormData,

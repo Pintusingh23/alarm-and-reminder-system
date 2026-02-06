@@ -2,18 +2,34 @@ import React from 'react';
 import { Calendar, Clock } from 'lucide-react';
 import ReminderCard from './ReminderCard';
 
-const ReminderList = ({ 
-  reminders, 
-  editingId, 
-  editData, 
-  setEditData,
-  onToggle, 
-  onStartEdit, 
-  onSaveEdit, 
-  onCancelEdit, 
-  onDelete 
-}) => {
+// ✅ Fake reminders (UI testing ke liye)
+const fakeReminders = [
+  {
+    id: 1,
+    title: 'Morning Alarm',
+    description: 'Wake up at 6 AM',
+    date: '2026-02-06',
+    time: '06:00',
+    completed: false,
+  },
   
+];
+
+const ReminderList = ({
+  reminders = [],
+  editingId,
+  editData,
+  setEditData,
+  onToggle,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onDelete,
+}) => {
+  // ✅ Agar real reminders empty ho → fake dikhao
+  const displayReminders =
+    reminders.length > 0 ? reminders : fakeReminders;
+
   return (
     <div className="bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-6">
       <h2 className="text-xl font-bold mb-6 flex items-center justify-between">
@@ -22,12 +38,12 @@ const ReminderList = ({
           Reminders
         </span>
         <span className="text-sm font-normal text-gray-400">
-          {reminders.length} total
+          {displayReminders.length} total
         </span>
       </h2>
 
-      {reminders.length === 0 ? (
-        // Empty State
+      {displayReminders.length === 0 ? (
+        // Empty state
         <div className="text-center py-12">
           <Clock size={64} className="mx-auto text-gray-600 mb-4" />
           <p className="text-gray-400 text-lg">No reminders found</p>
@@ -36,20 +52,20 @@ const ReminderList = ({
           </p>
         </div>
       ) : (
-        // Reminders List
+        // Reminder list
         <div className="space-y-4">
-          {reminders.map((reminder) => (
+          {displayReminders.map((reminder) => (
             <ReminderCard
               key={reminder.id}
               reminder={reminder}
               isEditing={editingId === reminder.id}
               editData={editData}
               setEditData={setEditData}
-              onToggle={() => onToggle(reminder.id)}
-              onEdit={() => onStartEdit(reminder)}
-              onSave={() => onSaveEdit(reminder.id)}
+              onToggle={() => onToggle?.(reminder.id)}
+              onEdit={() => onStartEdit?.(reminder)}
+              onSave={() => onSaveEdit?.(reminder.id)}
               onCancel={onCancelEdit}
-              onDelete={() => onDelete(reminder.id)}
+              onDelete={() => onDelete?.(reminder.id)}
             />
           ))}
         </div>
