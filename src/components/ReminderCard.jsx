@@ -1,18 +1,50 @@
-import React from 'react';
-import { Clock, Edit2, Trash2, Check, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, Edit2, Trash2, Check, X, Timer } from 'lucide-react';
 
-const ReminderCard = ({ 
-  reminder, 
-  isEditing, 
-  editData, 
+// Compute human-readable time remaining
+function getTimeRemaining(datetime) {
+  const diff = new Date(datetime) - new Date();
+  if (diff <= 0) return null; // overdue
+
+  const days = Math.floor(diff / 86400000);
+  const hrs = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+
+  if (days > 0) return `in ${days}d ${hrs}h ${mins}m`;
+  if (hrs > 0) return `in ${hrs}h ${mins}m`;
+  if (mins > 0) return `in ${mins}m ${secs}s`;
+  return `in ${secs}s`;
+}
+
+const ReminderCard = ({
+  reminder,
+  isEditing,
+  editData,
   setEditData,
-  onToggle, 
-  onEdit, 
-  onSave, 
-  onCancel, 
-  onDelete 
+  onToggle,
+  onEdit,
+  onSave,
+  onCancel,
+  onDelete
 }) => {
-  
+  // --- Live Countdown ---
+  const isCountdownActive = reminder.enabled && reminder.status === 'scheduled';
+  const [countdown, setCountdown] = useState(() =>
+    isCountdownActive ? getTimeRemaining(reminder.datetime) : null
+  );
+
+  useEffect(() => {
+    if (!isCountdownActive) {
+      setCountdown(null);
+      return;
+    }
+    const update = () => setCountdown(getTimeRemaining(reminder.datetime));
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [isCountdownActive, reminder.datetime]);
+
   // Format datetime for display
   const formatDateTime = (datetime) => {
     const date = new Date(datetime);
@@ -41,11 +73,10 @@ const ReminderCard = ({
 
   return (
     <div
-      className={`bg-slate-700 rounded-lg p-4 border transition-all ${
-        reminder.enabled 
-          ? 'border-slate-600 hover:border-blue-500' 
+      className={`bg-slate-700 rounded-lg p-4 border transition-all ${reminder.enabled
+          ? 'border-slate-600 hover:border-blue-500'
           : 'border-slate-700 opacity-60'
-      }`}
+        }`}
     >
       {isEditing ? (
         // Edit Mode
@@ -93,16 +124,32 @@ const ReminderCard = ({
               <h3 className="text-lg font-semibold text-white mb-1">
                 {reminder.title}
               </h3>
-              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getStatusColor(reminder.status, reminder.enabled)}`}>
-                {getStatusText(reminder.status, reminder.enabled)}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getStatusColor(reminder.status, reminder.enabled)}`}>
+                  {getStatusText(reminder.status, reminder.enabled)}
+                </span>
+                {/* Live Countdown Badge */}
+                {isCountdownActive && (
+                  countdown ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-amber-500/20 text-amber-400 animate-pulse">
+                      <Timer size={12} />
+                      {countdown}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-red-500/20 text-red-400">
+                      <Timer size={12} />
+                      Overdue
+                    </span>
+                  )
+                )}
+              </div>
             </div>
           </div>
-          
+
           {reminder.note && (
             <p className="text-gray-300 text-sm mb-3">{reminder.note}</p>
           )}
-          
+
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
             <Clock size={14} />
             <span>{formatDateTime(reminder.datetime)}</span>
@@ -111,11 +158,10 @@ const ReminderCard = ({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={onToggle}
-              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
-                reminder.enabled
+              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${reminder.enabled
                   ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                   : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
+                }`}
             >
               {reminder.enabled ? 'Disable' : 'Enable'}
             </button>

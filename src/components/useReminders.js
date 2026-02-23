@@ -211,6 +211,27 @@ export const useReminders = () => {
     }
   };
 
+  // Snooze alarm — reschedule 5 minutes from now
+  const snoozeAlarm = async () => {
+    if (activeAlarm) {
+      stopRingtone();
+      const id = activeAlarm._id || activeAlarm.id;
+      const snoozeTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ datetime: snoozeTime, status: 'scheduled', enabled: true })
+        });
+        const updatedReminder = await response.json();
+        setReminders(reminders.map(r => (r._id || r.id) === id ? updatedReminder : r));
+        setActiveAlarm(null);
+      } catch (error) {
+        console.error('Error snoozing alarm:', error);
+      }
+    }
+  };
+
   // Filter and sort reminders
   const filteredReminders = reminders
     .filter(r =>
@@ -254,6 +275,7 @@ export const useReminders = () => {
     saveEdit,
     cancelEdit,
     clearAllReminders,
-    markDone
+    markDone,
+    snoozeAlarm
   };
 };

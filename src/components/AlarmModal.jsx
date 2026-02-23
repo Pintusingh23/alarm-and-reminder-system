@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, AlarmClock } from 'lucide-react';
 import { stopRingtone, RINGTONES } from './ringtones';
 
-const AlarmModal = ({ alarm, onMarkDone }) => {
+const AlarmModal = ({ alarm, onMarkDone, onSnooze }) => {
   // Stop ringtone when modal closes
   useEffect(() => {
     return () => {
@@ -59,13 +59,22 @@ const AlarmModal = ({ alarm, onMarkDone }) => {
           </div>
         </div>
 
-        {/* Action Button */}
-        <button
-          onClick={handleDone}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
-        >
-          ✓ Mark Done & Stop Ring
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={onSnooze}
+            className="flex-1 flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+          >
+            <AlarmClock size={18} />
+            Snooze 5 min
+          </button>
+          <button
+            onClick={handleDone}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+          >
+            ✓ Mark Done
+          </button>
+        </div>
       </div>
     </div>
   );
