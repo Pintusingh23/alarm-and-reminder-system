@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { playRingtone, stopRingtone } from './ringtones';
+
+const API_URL = 'http://localhost:5001/api/reminders';
 
 export const useReminders = () => {
   const [reminders, setReminders] = useState([]);
@@ -7,12 +10,14 @@ export const useReminders = () => {
   const [sortBy, setSortBy] = useState('soonest');
   const [editingId, setEditingId] = useState(null);
   const [activeAlarm, setActiveAlarm] = useState(null);
-  
+  const [loading, setLoading] = useState(true);
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
     note: '',
-    datetime: ''
+    datetime: '',
+    ringtone: 'classic'
   });
 
   // Edit form state
@@ -21,6 +26,23 @@ export const useReminders = () => {
     note: '',
     datetime: ''
   });
+
+  // Fetch reminders on mount
+  useEffect(() => {
+    fetchReminders();
+  }, []);
+
+  const fetchReminders = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setReminders(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching reminders:', error);
+      setLoading(false);
+    }
+  };
 
   // Request notification permission on mount
   useEffect(() => {
@@ -57,56 +79,78 @@ export const useReminders = () => {
   // Trigger alarm
   const triggerAlarm = (reminder) => {
     setActiveAlarm(reminder);
-    
+
     // Show browser notification
     if (notificationsEnabled && 'Notification' in window) {
       new Notification('⏰ Alarm Triggered!', {
-        body: `${reminder.title}\n${reminder.note}`,
+        body: `${reminder.title}\n${reminder.note || ''}`,
         icon: '⏰'
       });
     }
 
-    // Play sound (optional)
-    try {
-      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGH0fPTgjMGHm7A7+OZSA0PVqzn77BdGAg+ltryxnYpBSl+zPLaizsIGGS57OihUBALTKXh8bllHAU2j9Xyz4IvBSF1xPDglEILEl+z6+unVRQLRp/g8r5sIAYxiNDy04M0Bh5uwO/jmEgND1as5++wXRgIPpba8sZ2KQUpfszy2os7CBhkuezoiVAQC0yl4fG5ZRwFNo/R8s+CLwUhdcTw4JRCCxJfs+vrp1UUC0af4PK+bCAGMYjQ8tODNAYebrDv4phIDQ9WrODvsF0YCD6W2vLGdikFKX7M8tqLOwgYZLns6IlQEAtMpeHxuWUcBTaP0fLPgi8FIXXE8OCUQgsSX7Pr66dVFAtGn+DyvmwgBjGI0PLTgzQGHm6w7+KYSA0PVqzg77BdGAg+ltryx3YpBSl+zPLaizsIGGS57OiJUBALTKXh8bllHAU2j9Hyz4IvBSF1xPDglEILEl+z6+unVRQLRp/g8r5sIAYxiNDy04M0Bh5usO/imEgND1as4O+wXRgIPpba8sd2KQUpfszy2os7CBhkuezoiVAQC0yl4fG5ZRwFNo/R8s+CLwUhdcTw4JRCCxJfs+vrp1UUC0af4PK+bCAGMYjQ8tODNAYebrDv4phIDQ9WrODvsF0YCD6W2vLHdikFKX7M8tqLOwgYZLns6IlQEAtMpeHxuWUcBTaP0fLPgi8FIXXE8OCUQgsSX7Pr66dVFAtGn+DyvmwgBjGI0PLTgzQGHm6w7+KYSA0PVqzg77BdGAg+ltryx3YpBSl+zPLaizsIGGS57OiJUBALTKXh8bllHAU2j9Hyz4IvBSF1xPDglEILEl+z6+unVRQLRp/g8r5sIAYxiNDy04M0Bh5usO/imEgND1as4O+wXRgIPpba8sd2KQUpfszy2os7CBhkuezoiVAQC0yl4fG5ZRwFNo/R8s+CLwUhdcTw4JRCCxJfs+vrp1UUC0af4PK+bCAGMYjQ8tODNAYebrDv4phIDQ9WrODvsF0YCD6W2vLHdikFKX7M8tqLOwgYZLns6IlQEAtMpeHxuWUcBTaP0fLPgi8FIXXE8OCUQgsSX7Pr66dVFAtGn+DyvmwgBjGI0PLTgzQGHm6w7+KYA==');
-      audio.play().catch(() => {});
-    } catch (e) {}
+    // Play the chosen ringtone (loops until stopped)
+    playRingtone(reminder.ringtone || 'classic', true);
   };
 
   // Add reminder
-  const addReminder = (e) => {
+  const addReminder = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.datetime) return;
 
     const newReminder = {
-      id: Date.now(),
       title: formData.title,
       note: formData.note,
       datetime: formData.datetime,
       status: 'scheduled',
       enabled: true,
-      createdAt: new Date().toISOString()
+      ringtone: formData.ringtone || 'classic'
     };
 
-    setReminders([...reminders, newReminder]);
-    setFormData({ title: '', note: '', datetime: '' });
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReminder)
+      });
+      const savedReminder = await response.json();
+      setReminders([...reminders, savedReminder]);
+      setFormData({ title: '', note: '', datetime: '', ringtone: 'classic' });
+    } catch (error) {
+      console.error('Error adding reminder:', error);
+    }
   };
 
   // Delete reminder
-  const deleteReminder = (id) => {
-    setReminders(reminders.filter(r => r.id !== id));
+  const deleteReminder = async (id) => {
+    try {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      setReminders(reminders.filter(r => (r._id || r.id) !== id));
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+    }
   };
 
   // Toggle reminder enable/disable
-  const toggleReminder = (id) => {
-    setReminders(reminders.map(r => 
-      r.id === id ? { ...r, enabled: !r.enabled } : r
-    ));
+  const toggleReminder = async (id) => {
+    const reminder = reminders.find(r => (r._id || r.id) === id);
+    if (!reminder) return;
+
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !reminder.enabled })
+      });
+      const updatedReminder = await response.json();
+      setReminders(reminders.map(r => (r._id || r.id) === id ? updatedReminder : r));
+    } catch (error) {
+      console.error('Error toggling reminder:', error);
+    }
   };
 
   // Start editing
   const startEdit = (reminder) => {
-    setEditingId(reminder.id);
+    setEditingId(reminder._id || reminder.id);
     setEditData({
       title: reminder.title,
       note: reminder.note,
@@ -115,11 +159,19 @@ export const useReminders = () => {
   };
 
   // Save edit
-  const saveEdit = (id) => {
-    setReminders(reminders.map(r => 
-      r.id === id ? { ...r, ...editData } : r
-    ));
-    setEditingId(null);
+  const saveEdit = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editData)
+      });
+      const updatedReminder = await response.json();
+      setReminders(reminders.map(r => (r._id || r.id) === id ? updatedReminder : r));
+      setEditingId(null);
+    } catch (error) {
+      console.error('Error saving edit:', error);
+    }
   };
 
   // Cancel edit
@@ -129,29 +181,41 @@ export const useReminders = () => {
   };
 
   // Clear all reminders
-  const clearAllReminders = () => {
+  const clearAllReminders = async () => {
     if (window.confirm('Are you sure you want to clear all reminders?')) {
-      setReminders([]);
+      // For now, we'll just delete them one by one or implement a bulk delete in backend
+      // Since bulk delete isn't implemented, let's just clear local state for now or notify it's not implemented
+      // Better to just delete them one by one for now to keep it consistent
+      for (const reminder of reminders) {
+        await deleteReminder(reminder._id || reminder.id);
+      }
     }
   };
 
   // Mark alarm as done
-  const markDone = () => {
+  const markDone = async () => {
     if (activeAlarm) {
-      setReminders(reminders.map(r => 
-        r.id === activeAlarm.id 
-          ? { ...r, status: 'completed', enabled: false }
-          : r
-      ));
-      setActiveAlarm(null);
+      const id = activeAlarm._id || activeAlarm.id;
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'completed', enabled: false })
+        });
+        const updatedReminder = await response.json();
+        setReminders(reminders.map(r => (r._id || r.id) === id ? updatedReminder : r));
+        setActiveAlarm(null);
+      } catch (error) {
+        console.error('Error marking as done:', error);
+      }
     }
   };
 
   // Filter and sort reminders
   const filteredReminders = reminders
-    .filter(r => 
+    .filter(r =>
       r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.note.toLowerCase().includes(searchQuery.toLowerCase())
+      (r.note || '').toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === 'soonest') {
@@ -173,13 +237,14 @@ export const useReminders = () => {
     activeAlarm,
     formData,
     editData,
-    
+    loading,
+
     // Setters
     setSearchQuery,
     setSortBy,
     setFormData,
     setEditData,
-    
+
     // Actions
     requestNotificationPermission,
     addReminder,
