@@ -1,94 +1,112 @@
 import React from 'react';
-import { Plus, Play } from 'lucide-react';
-import { RINGTONES, previewRingtone } from './ringtones';
+import { Plus, Play, Volume2 } from 'lucide-react';
+import { RINGTONES, RINGTONE_THEMES, previewRingtone } from './ringtones';
 
 const ReminderForm = ({ formData, setFormData, onSubmit }) => {
+  const selectedRt = formData.ringtone || 'classic';
+
   return (
-    <div className="bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-6">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Plus className="text-blue-400" size={24} />
-        Create Alarm / Reminder
+    <div className="glass rounded-2xl p-6 glow-teal animate-slide-up">
+      <h2 className="text-lg font-bold mb-5 flex items-center gap-2.5">
+        <div className="p-2 rounded-xl bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/15">
+          <Plus className="text-teal-400" size={18} />
+        </div>
+        <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Create Alarm</span>
       </h2>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        {/* Title Input */}
+      <form onSubmit={onSubmit} className="space-y-5">
+        {/* Title */}
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">
+          <label className="block text-[10px] font-bold mb-2 text-slate-500 uppercase tracking-[0.15em]">
             Title *
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white placeholder-gray-400"
+            className="w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-600 text-sm"
             placeholder="Enter reminder title"
             required
           />
         </div>
 
-        {/* Note Input */}
+        {/* Note */}
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">
+          <label className="block text-[10px] font-bold mb-2 text-slate-500 uppercase tracking-[0.15em]">
             Note
           </label>
           <textarea
             value={formData.note}
             onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white placeholder-gray-400 resize-none"
+            className="w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-600 resize-none text-sm"
             placeholder="Add additional notes"
-            rows="3"
+            rows="2"
           />
         </div>
 
-        {/* Date & Time Input */}
+        {/* Date & Time */}
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">
+          <label className="block text-[10px] font-bold mb-2 text-slate-500 uppercase tracking-[0.15em]">
             Date & Time *
           </label>
           <input
             type="datetime-local"
             value={formData.datetime}
             onChange={(e) => setFormData({ ...formData, datetime: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white"
+            className="w-full px-4 py-2.5 rounded-xl text-white text-sm"
             required
           />
         </div>
 
         {/* Ringtone Selector */}
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">
+          <label className="block text-[10px] font-bold mb-2.5 text-slate-500 uppercase tracking-[0.15em]">
             🎵 Ringtone
           </label>
           <div className="grid grid-cols-1 gap-2">
-            {RINGTONES.map(rt => (
-              <div
-                key={rt.id}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg border cursor-pointer transition-all ${(formData.ringtone || 'classic') === rt.id
-                    ? 'border-blue-500 bg-blue-500/10 text-white'
-                    : 'border-slate-600 bg-slate-700 text-gray-300 hover:border-slate-500'
-                  }`}
-                onClick={() => setFormData({ ...formData, ringtone: rt.id })}
-              >
-                <span className="text-sm font-medium">{rt.label}</span>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); previewRingtone(rt.id); }}
-                  className="p-1.5 rounded-full bg-slate-600 hover:bg-blue-600 text-gray-300 hover:text-white transition-all"
-                  title="Preview"
+            {RINGTONES.map(rt => {
+              const theme = RINGTONE_THEMES[rt.id];
+              const isSelected = selectedRt === rt.id;
+              return (
+                <div
+                  key={rt.id}
+                  className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-300 card-hover-lift ${isSelected ? theme.cardActive : theme.cardIdle
+                    }`}
+                  style={isSelected ? { '--strip-color': theme.stripColor } : {}}
+                  onClick={() => setFormData({ ...formData, ringtone: rt.id })}
                 >
-                  <Play size={12} />
-                </button>
-              </div>
-            ))}
+                  {/* Color accent strip on left when selected */}
+                  {isSelected && (
+                    <div
+                      className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full"
+                      style={{ backgroundColor: theme.stripColor }}
+                    />
+                  )}
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-lg">{rt.emoji}</span>
+                    <span className="text-sm font-medium">{rt.label}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); previewRingtone(rt.id); }}
+                    className="p-1.5 rounded-full glass glass-hover transition-all hover:scale-110"
+                    style={{ color: isSelected ? theme.stripColor : undefined }}
+                    title="Preview"
+                  >
+                    {isSelected ? <Volume2 size={13} /> : <Play size={12} />}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+          className="w-full bg-gradient-to-r from-teal-600 via-cyan-600 to-teal-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white font-bold py-3 rounded-xl transition-all duration-500 transform hover:scale-[1.02] shadow-lg shadow-teal-500/15 border border-teal-400/20 text-sm tracking-wide"
         >
-          Add Reminder
+          ✦ Add Reminder
         </button>
       </form>
     </div>
