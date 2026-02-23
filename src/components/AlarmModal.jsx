@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Clock, AlarmClock } from 'lucide-react';
-import { stopRingtone, RINGTONES } from './ringtones';
+import { Clock, AlarmClock, CheckCircle } from 'lucide-react';
+import { stopRingtone, RINGTONES, RINGTONE_THEMES } from './ringtones';
 
 const AlarmModal = ({ alarm, onMarkDone, onSnooze }) => {
   // Stop ringtone when modal closes
@@ -17,7 +17,11 @@ const AlarmModal = ({ alarm, onMarkDone, onSnooze }) => {
     onMarkDone();
   };
 
-  const ringtoneLabel = RINGTONES.find(r => r.id === (alarm.ringtone || 'classic'))?.label || '🔔 Classic Bell';
+  const ringtoneId = alarm.ringtone || 'classic';
+  const ringtoneMeta = RINGTONES.find(r => r.id === ringtoneId);
+  const ringtoneLabel = ringtoneMeta?.label || '🔔 Classic Bell';
+  const ringtoneEmoji = ringtoneMeta?.emoji || '🔔';
+  const theme = RINGTONE_THEMES[ringtoneId] || RINGTONE_THEMES.classic;
 
   // Format datetime for display
   const formatDateTime = (datetime) => {
@@ -32,30 +36,41 @@ const AlarmModal = ({ alarm, onMarkDone, onSnooze }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-2xl shadow-2xl border-2 border-red-500 max-w-md w-full p-8 animate-pulse">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+      {/* Frosted overlay with ringtone-colored radial glow */}
+      <div
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{
+          background: `radial-gradient(ellipse 50% 40% at 50% 50%, ${theme.bgTint?.replace('0.03', '0.15') || 'rgba(99,102,241,0.15)'}, transparent), rgba(0,0,0,0.85)`
+        }}
+      />
+
+      {/* Modal card */}
+      <div className={`relative glass-strong rounded-2xl max-w-md w-full p-8 border-2 ${theme.modalBorder} animate-slide-up`}>
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="text-6xl mb-3 animate-bounce">🔔</div>
-          <h2 className="text-3xl font-bold text-red-400 mb-1">
+          <div className="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-2xl glass border border-white/10">
+            <span className="text-5xl animate-scale-bounce">{ringtoneEmoji}</span>
+          </div>
+          <h2 className={`text-3xl font-extrabold mb-2 ${theme.modalTitle}`}>
             Alarm Triggered!
           </h2>
-          <span className="text-xs text-slate-400 bg-slate-700 px-3 py-1 rounded-full">
+          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${theme.modalPill}`}>
             {ringtoneLabel}
           </span>
         </div>
 
         {/* Alarm Details */}
-        <div className="bg-slate-700 rounded-lg p-4 mb-6">
-          <h3 className="text-xl font-bold text-white mb-2">
+        <div className="glass rounded-xl p-4 mb-6 border border-white/[0.06]" style={{ background: theme.bgTint }}>
+          <h3 className="text-lg font-bold text-white mb-1.5 tracking-tight">
             {alarm.title}
           </h3>
           {alarm.note && (
-            <p className="text-gray-300 mb-3">{alarm.note}</p>
+            <p className="text-slate-400 text-sm mb-2.5">{alarm.note}</p>
           )}
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Clock size={14} />
-            <span>{formatDateTime(alarm.datetime)}</span>
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+            <Clock size={11} />
+            <span className="font-display">{formatDateTime(alarm.datetime)}</span>
           </div>
         </div>
 
@@ -63,16 +78,17 @@ const AlarmModal = ({ alarm, onMarkDone, onSnooze }) => {
         <div className="flex gap-3">
           <button
             onClick={onSnooze}
-            className="flex-1 flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+            className={`flex-1 flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all duration-300 transform hover:scale-[1.03] text-sm tracking-wide ${theme.snoozeButton}`}
           >
-            <AlarmClock size={18} />
+            <AlarmClock size={16} />
             Snooze 5 min
           </button>
           <button
             onClick={handleDone}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+            className="flex-1 glass border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-400/40 font-bold py-3.5 rounded-xl transition-all duration-300 transform hover:scale-[1.03] flex items-center justify-center gap-2 text-sm tracking-wide"
           >
-            ✓ Mark Done
+            <CheckCircle size={16} />
+            Mark Done
           </button>
         </div>
       </div>
