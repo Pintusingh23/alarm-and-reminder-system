@@ -6,8 +6,9 @@ import ReminderList from './components/ReminderList';
 import AlarmModal from './components/AlarmModal';
 import WorldClock from './components/WorldClock';
 import Stopwatch from './components/Stopwatch';
+import CountdownTimer from './components/CountdownTimer';
 import { useReminders } from './components/useReminders';
-import { Bell, Globe, Timer } from 'lucide-react';
+import { Bell, Globe, Timer, Hourglass } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('reminders');
@@ -38,7 +39,8 @@ export default function App() {
     saveEdit,
     cancelEdit,
     clearAllReminders,
-    markDone
+    markDone,
+    snoozeAlarm
   } = useReminders();
 
   return (
@@ -82,6 +84,16 @@ export default function App() {
             <Timer size={16} />
             Stopwatch
           </button>
+          <button
+            onClick={() => setActiveTab('timer')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all duration-200 ${activeTab === 'timer'
+              ? 'bg-slate-800 border border-b-transparent border-slate-700 text-white -mb-px'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+          >
+            <Hourglass size={16} />
+            Timer
+          </button>
         </div>
       </div>
 
@@ -123,14 +135,17 @@ export default function App() {
         </main>
       ) : activeTab === 'worldclock' ? (
         <WorldClock />
-      ) : (
+      ) : activeTab === 'stopwatch' ? (
         <Stopwatch />
+      ) : (
+        <CountdownTimer />
       )}
 
       {/* Alarm Modal */}
       <AlarmModal
         alarm={activeAlarm}
         onMarkDone={markDone}
+        onSnooze={snoozeAlarm}
       />
     </div>
   );
